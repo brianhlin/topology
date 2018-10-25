@@ -66,6 +66,7 @@ def main():
     errors += test_4_res_svcs(rgs, rgfns)
     errors += test_5_sc(rgs, rgfns)
     errors += test_6_site()
+    errors += test_8_req_contacts(rgs, rgfns)
 
     print("%d Resource Group files processed." % len(rgs))
     if errors:
@@ -81,14 +82,16 @@ _sups_url     = _gh_baseurl + 'topology/support-centers.yaml'
 _vos_url      = _gh_baseurl + 'virtual-organizations'
 
 _emsgs = {
-    'RGUnique'      : "Resource Group names must be unique across all Sites",
-    'ResUnique'     : "Resource names must be unique across the OSG topology",
-    'SiteUnique'    : "Site names must be unique across Facilities",
-    'FQDNUnique'    : "FQDNs must be unique across the OSG topology",
-    'VOOwnership100': "Total VOOwnership must not exceed 100%",
-    'NoServices'    : "Valid Services are listed here: %s" % _services_url,
-    'NoSupCenter'   : "Valid Support Centers are listed here: %s" % _sups_url,
-    'UnknownVO'     : "Valid VOs are listed here: %s" % _vos_url,
+    'RGUnique'       : "Resource Group names must be unique across all Sites",
+    'ResUnique'      : "Resource names must be unique across the OSG topology",
+    'SiteUnique'     : "Site names must be unique across Facilities",
+    'FQDNUnique'     : "FQDNs must be unique across the OSG topology",
+    'VOOwnership100' : "Total VOOwnership must not exceed 100%",
+    'NoServices'     : "Valid Services are listed here: %s" % _services_url,
+    'NoSupCenter'    : "Valid Support Centers are listed here: %s" % _sups_url,
+    'UnknownVO'      : "Valid VOs are listed here: %s" % _vos_url,
+    'NoAdmin'        : "Resources missing administrative contacts",
+    'NoSec'          : "Resources missing security contacts",
 }
 
 def print_emsg_once(msgtype):
@@ -252,6 +255,40 @@ def test_7_fqdn_unique(rgs, rgfns):
             errors += 1
 
     return errors
+
+
+def test_8_req_contacts(rgs, rgfns):
+    """Each active resource needs to have administrative and security contacts
+    """
+
+    no_admin = list()
+    no_sec = list()
+
+    for rg, rgfn in zip(rgs, rgfns):
+        for rname, rdict in rg['Resources'].items():
+            if rdict.get('ContactLists') is None:
+                no_admin.append((rgfn, rname))
+                no_sec.append((rgfn, rname))
+                continue
+            if rdict['ContactLists'].get('Administrative Contact') is None:
+                no_admin.append((rgfn, rname))
+            if rdict['ContactLists'].get('Security Contact') is None:
+                no_sec.append((rgfn, rname))
+
+    errors = len(no_admin) + len(no_sec)
+
+    for resource in no_admin:
+        rgfile, rname = resource
+        print_emsg_once('NoAdmin')
+        print(" - %s (%s)" % (rname, rgfile))
+
+    for resource in no_sec:
+        rgfile, rname = resource
+        print_emsg_once('NoSec')
+        print(" - %s (%s)" % (rname, rgfile))
+
+    return errors
+
 
 if __name__ == '__main__':
     sys.exit(main())
