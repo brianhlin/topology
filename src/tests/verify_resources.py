@@ -111,6 +111,8 @@ _emsgs = {
     'UnknownVO'     : "Valid VOs are listed here: %s" % _vos_url,
 
     'NoResourceContactLists' : "Resources must contain a ContactLists section",
+    'NoAdminContact'        : "Resources must contain an Adminstrative Contact",
+    'NoSecContact'           : "Resources must contain a Security Contact",
     'MalformedContactID'     : "Contact IDs must be exactly 40 hex digits",
     'UnknownContactID'       : "Contact IDs must exist in contact repo",
     'ContactNameMismatch'    : "Contact names must match in contact repo",
@@ -287,32 +289,50 @@ def test_8_res_contacts(rgs, rgfns, contacts):
     # verify resource contacts against contact repo
 
     errors = 0
+    emsgs = autodict()
 
-    for rg,rgfn in zip(rgs,rgfns):
-        for rname,rdict in sorted(rg['Resources'].items()):
+    def add_emsg(emsg_type, emsg, emsg_dict=emsgs):
+        """Helper function for constructing error messages
+        """
+        emsg_dict[emsg_type] += " - {0}".format(emsg)
+
+    for rg, rgfn in zip(rgs, rgfns):
+        for rname, rdict in sorted(rg['Resources'].items()):
             rcls = rdict.get('ContactLists')
             if not rcls:
-                print_emsg_once('NoResourceContactLists')
-                print("In '%s', Resource '%s' has no ContactLists"
-                      % (rgfn, rname))
+                add_emsg('NoResourceContactLists',
+                         "In '%s', Resource '%s' has no ContactLists\n" % (rgfn, rname))
                 errors += 1
             else:
+                if not rcls.get('Adminstrative Contact'):
+                    add_emsg('NoAdminContact',
+                             "In '%s', Resource '%s' has no Administrative Contact\n" % (rgfn, rname))
+                    errors += 1
+                if not rcls.get('Security Contact'):
+                    add_emsg('NoSecContact',
+                             "In '%s', Resource '%s' has no Security Contact\n" % (rgfn, rname))
+                    errors += 1
                 for ctype, clevel, ID, name in flatten_res_contacts(rcls):
                     if not re.search(r'^[0-9a-f]{40}$', ID):
-                        print_emsg_once('MalformedContactID')
-                        print("In '%s', Resource '%s' has malformed %s %s '%s'"
-                              " (%s)" % (rgfn, rname, clevel, ctype, ID, name))
+                        add_emsg('MalformedContactID', "In '%s', Resource '%s' has malformed %s %s '%s' (%s)"
+                                 % (rgfn, rname, clevel, ctype, ID, name))
+                        errors += 1
                     elif ID not in contacts:
-                        print_emsg_once('UnknownContactID')
-                        print("In '%s', Resource '%s' has unknown %s %s '%s'"
-                              " (%s)" % (rgfn, rname, clevel, ctype, ID, name))
+                        add_emsg('UnknownContactID', "In '%s', Resource '%s' has unknown %s %s '%s' (%s)"
+                                 % (rgfn, rname, clevel, ctype, ID, name))
+                        errors += 1
                     elif name != contacts[ID]:
-                        print_emsg_once('ContactNameMismatch')
-                        print("In '%s', Resource '%s' %s %s '%s' (%s) does not"
-                              " match name in contact repo (%s)" % (rgfn,
-                              rname, clevel, ctype, ID, name, contacts[ID]))
+                        add_emsg('ContactNameMismatch',
+                                 "In '%s', Resource '%s' %s %s '%s' (%s) does not match name in contact repo (%s)"
+                                 % (rgfn, rname, clevel, ctype, ID, name, contacts[ID]))
+                        errors += 1
+
+    for msg_type, msg in emsgs.items():
+        print_emsg_once(msg_type)
+        print(msg)
 
     return errors
+
 
 if __name__ == '__main__':
     sys.exit(main())
