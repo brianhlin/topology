@@ -318,23 +318,23 @@ def test_9_res_contacts(rgs, rgfns, contacts):
     def add_emsg(emsg_type, emsg, emsg_dict=emsgs):
         """Helper function for constructing error messages
         """
-        emsg_dict[emsg_type] += " - {0}".format(emsg)
+        emsg_dict[emsg_type] += " - {0}\n".format(emsg)
 
     for rg, rgfn in zip(rgs, rgfns):
         for rname, rdict in sorted(rg['Resources'].items()):
             rcls = rdict.get('ContactLists')
             if not rcls:
                 add_emsg('NoResourceContactLists',
-                         "In '%s', Resource '%s' has no ContactLists\n" % (rgfn, rname))
+                         "In '%s', Resource '%s' has no ContactLists" % (rgfn, rname))
                 errors += 1
             else:
-                if not rcls.get('Adminstrative Contact'):
+                if not rcls.get('Administrative Contact'):
                     add_emsg('NoAdminContact',
-                             "In '%s', Resource '%s' has no Administrative Contact\n" % (rgfn, rname))
+                             "In '%s', Resource '%s' has no Administrative Contact" % (rgfn, rname))
                     errors += 1
                 if not rcls.get('Security Contact'):
                     add_emsg('NoSecContact',
-                             "In '%s', Resource '%s' has no Security Contact\n" % (rgfn, rname))
+                             "In '%s', Resource '%s' has no Security Contact" % (rgfn, rname))
                     errors += 1
                 for ctype, clevel, ID, name in flatten_res_contacts(rcls):
                     if not re.search(r'^[0-9a-f]{40}$', ID):
