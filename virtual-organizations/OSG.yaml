@@ -71,6 +71,9 @@ PurposeURL: http://www.opensciencegrid.org
 ReportingGroups:
 - osg
 SupportURL: http://www.opensciencegrid.org
+ComputeFederation:
+  AllowedAccessPoints:
+    - UChicago_OSGConnect_login05
 DataFederations:
   StashCache:
     Namespaces:
