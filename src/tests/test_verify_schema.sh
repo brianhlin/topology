@@ -12,6 +12,7 @@ function verify_xml {
     xml="$1"
     type="$2"
     echo "Validating $type XML schema..."
+    echo "$xml"
     xmllint --noout --schema "$REPO_ROOT_DIR/src/schema/$type.xsd" $xml
 }
 
