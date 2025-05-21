@@ -791,6 +791,7 @@ Resources:
     FQDN: oconnor-ap2000.chtc.wisc.edu
     FQDNAliases:
     - oconnor-ap.chtc.wisc.edu
+    - oconnor-ap4000.chtc.wisc.edu
     Services:
       Submit Node:
         Description: OSPool access point
